@@ -7,7 +7,7 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "Pioneer");
+  ros::init(argc, argv, "pioneer");
   TestPioneer pioneer;
   pioneer.initialize();
   ros::spin();

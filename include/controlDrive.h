@@ -1,6 +1,5 @@
 #include <iostream>
 #include <stdlib.h>
-#include <array>
 #include <math.h>
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
@@ -13,30 +12,28 @@ using namespace std;
 #define TESTPIONEER_H_
 
 int flag = 0;
-int arraySize = 0;
-float reqPosition = 5;
+float reqPosition = 3;
 
 class TestPioneer
 {
  public:
-  void controlDrive();
   void initialize();
   geometry_msgs::Twist vel;
   
  private:
   void laserCall(const sensor_msgs::LaserScan::ConstPtr& laser);
   void joyCallback(const sensor_msgs::Joy::ConstPtr& joy);
-  ros::NodeHandle n_;
-  ros::Publisher vel_pub_;
-  ros::Subscriber joy_sub_;
-  ros::Subscriber laser_sub_;
+  ros::NodeHandle n;
+  ros::Publisher vel_pub;
+  ros::Subscriber joy_sub;
+  ros::Subscriber laser_sub;
 };
 
 void TestPioneer::initialize()
 {
-  vel_pub_ = n_.advertise<geometry_msgs::Twist>("RosAria/cmd_vel", 1);
-  laser_sub_ = n_.subscribe<sensor_msgs::LaserScan>("/scan", 10, &TestPioneer::laserCall, this);
-  joy_sub_ = n_.subscribe<sensor_msgs::Joy>("/joy", 10, &TestPioneer::joyCallback, this);
+  vel_pub = n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel", 1);
+  laser_sub = n.subscribe<sensor_msgs::LaserScan>("/scan", 10, &TestPioneer::laserCall, this);
+  joy_sub = n.subscribe<sensor_msgs::Joy>("/joy", 10, &TestPioneer::joyCallback, this);
 }
 
 void TestPioneer::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
@@ -44,15 +41,15 @@ void TestPioneer::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
   if((joy->buttons[8] == 1) && (joy->buttons[9] == 1))
     {
       flag = 0;
-      laser_sub_ = n_.subscribe<sensor_msgs::LaserScan>("/scan", 10, &TestPioneer::laserCall, this);
+      laser_sub = n.subscribe<sensor_msgs::LaserScan>("/scan", 10, &TestPioneer::laserCall, this);
     }
 }
 
-void laserCall(const sensor_msgs::LaserScan::ConstPtr& laser)
+void TestPioneer::laserCall(const sensor_msgs::LaserScan::ConstPtr& laser)
 {
   if(flag == 0)
     {  
-      arraySize = sizeof(laser->ranges[1])/sizeof(laser->ranges[0]);
+      int arraySize = sizeof(laser->ranges)/sizeof(laser->ranges[0]);
       float pi = 3.1415;
       int sideLimits = 2;
       float angleArray[arraySize];
@@ -61,7 +58,7 @@ void laserCall(const sensor_msgs::LaserScan::ConstPtr& laser)
       float rightSideDistance = 0;
       int midPoint = arraySize/2;
       int arrayPosition = 0;
-      float linearError = reqPosition - laser-ranges[midPoint];
+      float linearError = reqPosition - laser->ranges[midPoint];
       
       float kp_linear_ = 0.6;
       float kp_angular_ = 0.2;
@@ -73,15 +70,15 @@ void laserCall(const sensor_msgs::LaserScan::ConstPtr& laser)
       for(arrayPosition = 1; arrayPosition < arraySize ; arrayPosition++)
 	{
 	  angleArray[arrayPosition] = (minAngle + (arrayPosition*incrementAngle))*(pi/180);
-	  yDistance[arrarPosition] = cos(angleArray[arrayPosition]);
+	  yDistance[arrayPosition] = cos(angleArray[arrayPosition]);
 	  if(yDistance[arrayPosition] >= sideLimits)
 	    {
-	      yDistance[arrayPosition] = sidelimits;
+	      yDistance[arrayPosition] = sideLimits;
 	    }
 	  while(arrayPosition <= midPoint)
 	    {
 	      if(angleArray[arrayPosition] < angleArray[arrayPosition - 1])
-		rigthSideDistance = angleArray[arrayPosition];
+		rightSideDistance = angleArray[arrayPosition];
 	    }
 	  while(arrayPosition > midPoint)
 	    {
@@ -103,7 +100,7 @@ void laserCall(const sensor_msgs::LaserScan::ConstPtr& laser)
 	    {
 	      vel.angular.z = kp_angular_*angularError;
 	    }
-	  vel_pub_.publish(vel);
+	  vel_pub.publish(vel);
 	}
       else if(linearError < 0)
 	{
@@ -116,26 +113,26 @@ void laserCall(const sensor_msgs::LaserScan::ConstPtr& laser)
 	    {
 	      vel.angular.z = kp_angular_*angularError;
 	    }
-	  vel_pub_.publish(vel);
+	  vel_pub.publish(vel);
 	}
       else
 	{
 	  vel.linear.x = 0;
 	  vel.angular.z = 0;
 	  flag = 1;
-	  joy_sub_ = n_.subscribe<sensor_msgs::Joy>("/joy", 10, &TestPioneer::joyCallback, this);
+      joy_sub = n.subscribe<sensor_msgs::Joy>("/joy", 10, &TestPioneer::joyCallback, this);
 	}
-      vel_pub_.publish(vel);
+      vel_pub.publish(vel);
     }
   else
     {
       vel.linear.x = 0;
       vel.angular.z = 0;
       flag = 1;
-      joy_sub_ = n_.subscribe<sensor_msgs::Joy>("/joy", 10, &TestPioneer::joyCallback, this);
-      vel_pub_.publish(vel);
+      joy_sub = n.subscribe<sensor_msgs::Joy>("/joy", 10, &TestPioneer::joyCallback, this);
+      vel_pub.publish(vel);
     }
-  vel_pub_.publish(vel);
+  vel_pub.publish(vel);
 }
 
 #endif /* testPioneer.h */
