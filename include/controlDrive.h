@@ -11,6 +11,19 @@ using namespace std;
 #ifndef TESTPIONEER_H_
 #define TESTPIONEER_H_
 
+int arraySize, midPoint;
+float incrementAngle, minAngle, maxAngle;
+
+float pi = 3.1415;
+int sideLimits = 2;
+float leftSideDistance = 0;
+float rightSideDistance = 0;
+int arrayPosition = 0;
+float linearError, angularError;
+
+float kp_linear_ = 0.6;
+float kp_angular_ = 0.2;
+
 int flag = 0;
 float reqPosition = 3;
 
@@ -49,24 +62,18 @@ void TestPioneer::laserCall(const sensor_msgs::LaserScan::ConstPtr& laser)
 {
   if(flag == 0)
     {  
-      int arraySize = sizeof(laser->ranges)/sizeof(laser->ranges[0]);
-      float pi = 3.1415;
-      int sideLimits = 2;
+      arraySize = sizeof(laser->ranges)/sizeof(laser->ranges[0]);
       float angleArray[arraySize];
       float yDistance[arraySize];
-      float leftSideDistance = 0;
-      float rightSideDistance = 0;
-      int midPoint = arraySize/2;
-      int arrayPosition = 0;
-      float linearError = reqPosition - laser->ranges[midPoint];
+      midPoint = arraySize/2;
+      linearError = reqPosition - laser->ranges[midPoint];
       
-      float kp_linear_ = 0.6;
-      float kp_angular_ = 0.2;
+      incrementAngle = laser->angle_increment;
+      minAngle = laser->angle_min;
+      maxAngle = laser->angle_max;
       
-      float incrementAngle = laser->angle_increment;
-      float minAngle = laser->angle_min;
-      float maxAngle = laser->angle_max;
-      
+      angleArray[0] = minAngle;
+
       for(arrayPosition = 1; arrayPosition < arraySize ; arrayPosition++)
 	{
 	  angleArray[arrayPosition] = (minAngle + (arrayPosition*incrementAngle))*(pi/180);
@@ -87,7 +94,7 @@ void TestPioneer::laserCall(const sensor_msgs::LaserScan::ConstPtr& laser)
 	    }
 	}
       
-      float angularError = leftSideDistance - rightSideDistance;
+      angularError = leftSideDistance - rightSideDistance;
       
       if(linearError > 0)
 	{
